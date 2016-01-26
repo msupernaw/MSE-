@@ -9,8 +9,7 @@ ASSESSMENT FREQUENCY
 
 For example:
 
-ASSESSMENT FREQUENCY
-
+ASSESSMENT FREQUENCY<br>
 3
 
 will only analyze every three years found in the input file.
