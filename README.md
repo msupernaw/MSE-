@@ -10,6 +10,7 @@ ASSESSMENT FREQUENCY
 For example:
 
 ASSESSMENT FREQUENCY
+
 3
 
 will only analyze every three years found in the input file.
