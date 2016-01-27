@@ -15,13 +15,13 @@
 #define MSE_HPP
 
 #include "util.h"
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
 #include <random>
 #include <iostream>
+#include <memory>
 
 #define   MAXBUF    2048
 #define   FILBUF     256
@@ -443,12 +443,17 @@ namespace noaa {
             return sign*y;
         }
 
-        const T pnorm(const T &x, const T &mean, const T &sd) {
-            return T(0.5)*(T(1.0) + Erf((x - mean) / std::sqrt(T(2.0) * sd * sd)));
+        const T pnorm(const T &x, const T &m, const T &s) {
+            //            return T(0.5)*(T(1.0) + Erf((x - mean) / std::sqrt(T(2.0) * sd * sd)));
+            static const T inv_sqrt_2pi = 0.3989422804014327;
+            T a = (x - m) / s;
+
+            return inv_sqrt_2pi / s * std::exp(-T(0.5) * a * a);
         }
 
         T DNORDF(T* x) {
-            return pnorm(*x, this->distribution.mean(), this->distribution.stddev());
+//            return pnorm(*x, this->distribution.mean(), this->distribution.stddev());
+             return 0.5 * erfc(-*x * M_SQRT1_2);
         }
 
         T DRNUNF() {
@@ -461,8 +466,29 @@ namespace noaa {
             }
         }
 
-        long CreateConsoleProcess(char *cmd) {
-            return 0;//system(cmd);
+        std::string exec(const char* cmd, int& error) {
+            std::shared_ptr<FILE> pipe(_popen(cmd, "r"), _pclose);
+            if (!pipe) {
+                error = 0;
+                return "";
+            }
+            char buffer[128];
+            std::string result = "";
+            while (!feof(pipe.get())) {
+                if (fgets(buffer, 128, pipe.get()) != NULL) {
+                    std::cout << buffer << std::flush;
+                }
+                //                    result += buffer;
+            }
+            return result;
+        }
+
+        long ppCreateConsoleProcess(char *cmd) {
+            std::cout << cmd << "\n";
+            int error = 1;
+            std::string out = this->exec(cmd, error);
+            std::cout << out << std::endl;
+            return error;
         }
 
     public:
@@ -552,7 +578,7 @@ namespace noaa {
             ReadDataFile();
             std::cout << "assessment frequency = " << this->assessment_frequency << "\n";
             std::cout << "done.\n";
-//            exit(0);
+            //            exit(0);
             BaseSeed = ISeed;
 
             BaseYears = NYears;
@@ -626,7 +652,7 @@ namespace noaa {
                 for (k = 0; k < NYears; k++) {
 
                     if (!(k % this->assessment_frequency) == 0) {
-                        continue;
+                                                continue;
                     }
                     /* Stock Age Key */
 
@@ -677,7 +703,7 @@ namespace noaa {
                 for (k = 0; k < NYears; k++) {
                     /* Get Samples by Market Category */
                     if (!(k % this->assessment_frequency) == 0) {
-                        continue;
+                                                continue;
                     }
                     GetMarketSamples(k);
 
@@ -716,6 +742,9 @@ namespace noaa {
 
                 for (n = 0; n < NSurvey; n++) {
                     for (k = 0; k < NYears + 1; k++) {
+                        if (!(k % this->assessment_frequency) == 0) {
+                                                continue;
+                    }
                         GetSurveySamples(k, n);
                         ApplySurveyAgeKey(k, n);
                     }
@@ -1330,7 +1359,7 @@ namespace noaa {
                             *c = '\0';
                         c = buffer;
                         *(c + 15) = '\0';
-                        MarketTags[i] = strdup(buffer);
+                        MarketTags[i] = _strdup(buffer);
                     }
 
                     for (i = 0; i < NBins; i++) {
@@ -1965,6 +1994,9 @@ namespace noaa {
         }
 
         void CalcStockWeights(short k) {
+            if (!(k % this->assessment_frequency) == 0) {
+                                                return;
+                    }
             short i, j;
             double xl, xt, xw, xx;
             double alpha, beta;
@@ -2749,6 +2781,9 @@ namespace noaa {
         void CalcStockAgeKey(short k) {
             short i, j, n;
             double xt;
+            if (!(k % this->assessment_frequency) == 0) {
+                                                return;
+                    }
 
             /* Stock Age Length Key */
 
@@ -4010,6 +4045,7 @@ namespace noaa {
         }
 
         long LaunchVPA(char *fn) {
+            std::cout << __func__ << "\n";
             char xname[FILBUF];
             char cmdline[MAXBUF];
             char *c;
@@ -4026,7 +4062,7 @@ namespace noaa {
 
             strcat(xname, "_vpa.dat");
 
-
+            //            VPAPath  ="c:\nft\vpav301\vpa2.exe";
             strcpy(cmdline, VPAPath);
             strcat(cmdline, " ");
             strcat(cmdline, qt);
@@ -4040,11 +4076,13 @@ namespace noaa {
         }
 
         long LaunchAgePro() {
+            std::cout << __func__ << "\n";
+
             char cmdline[FILBUF];
             long k;
 
 
-            strcpy(cmdline, "cmd.exe  /C ");
+            //            strcpy(cmdline, "cmd.exe  /C ");
             strcat(cmdline, AgeProPath);
             strcat(cmdline, " < AgePro34.ctrl");
             LowerCase(cmdline);
@@ -4055,6 +4093,8 @@ namespace noaa {
         }
 
         long LaunchAspic(char *fn) {
+            std::cout << __func__ << "\n";
+
             char xname[FILBUF];
             char cmdline[MAXBUF];
             char *c;
@@ -4137,6 +4177,7 @@ namespace noaa {
         }
 
         void SetupAgepro(char *fn) {
+            std::cout << __func__ << "\n";
             char xname[FILBUF];
             char *c;
 
@@ -4573,7 +4614,7 @@ namespace noaa {
             for (i = 0; i < NSTRING; i++) {
 
                 fgets(buffer, MAXBUF, fp1);
-                PString[i] = strdup(buffer);
+                PString[i] = _strdup(buffer);
             }
 
 
@@ -4732,6 +4773,8 @@ namespace noaa {
         }
 
         long LaunchAspicProj(char *fn) {
+            std::cout << __func__ << "\n";
+
             char xname[FILBUF];
             char cmdline[MAXBUF];
             char *c;
