@@ -4,7 +4,7 @@
  * and open the template in the editor.
  */
 
-/* 
+/*
  * File:   MSE.hpp
  * Author: matthewsupernaw
  *
@@ -48,7 +48,7 @@
 #define   NSELMOD  6
 #define   NPHASE   8
 
-
+#define   M_SQRT1_2 (1.0 / 1.41421356237309504880168872421)
 
 
 namespace noaa {
@@ -329,6 +329,7 @@ namespace noaa {
 
         double Fmsy;
         double Bmsy;
+        double Blim;
         double TargetF;
         double TargetSSB;
         double TargetLand;
@@ -483,11 +484,11 @@ namespace noaa {
             return result;
         }
 
-        long ppCreateConsoleProcess(char *cmd) {
+        long CreateConsoleProcess(char *cmd) {
             std::cout << cmd << "\n";
             int error = 1;
             std::string out = this->exec(cmd, error);
-            std::cout << out << std::endl;
+            std::cout << out.c_str() << std::endl;
             return error;
         }
 
@@ -797,7 +798,9 @@ namespace noaa {
 
                         /* Apply Management Rule */
 
-                        if (SSBEstim < Bmsy)
+                        if (SSBEstim <= Blim)
+                            FEstim = 0.0;
+                        else if (SSBEstim < Bmsy)
                             FEstim = SSBEstim * Fmsy / Bmsy;
                         else
                             FEstim = Fmsy;
@@ -1467,6 +1470,8 @@ namespace noaa {
                     Fmsy = atof(tok);
                     tok = strtok(NULL, " \t\r\n");
                     Bmsy = atof(tok);
+                    tok = strtok(NULL, " \t\r\n");
+                    Blim = atof(tok);
                     tok = strtok(NULL, " \t\r\n");
                     DeltaLand = atof(tok);
 
@@ -4149,7 +4154,9 @@ namespace noaa {
 
             x = x / 1000.0;
 
-            if (x < Bmsy)
+            if (x <= Blim)
+                f = 0.0;
+            else if (x < Bmsy)
                 f = x * Fmsy / Bmsy;
             else
                 f = Fmsy;
@@ -4165,7 +4172,9 @@ namespace noaa {
 
             x = AspicB[NYears - 1];
 
-            if (x < Bmsy)
+            if (x <= Blim)
+                f = 0.0;
+            else if (x < Bmsy)
                 f = x * Fmsy / Bmsy;
             else
                 f = Fmsy;
