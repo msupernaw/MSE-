@@ -1,3 +1,5 @@
+#define _CRT_SECURE_NO_WARNINGS 1
+
 #include <string.h>
 #include <stdlib.h>
 #include <ctype.h>
@@ -96,11 +98,18 @@ short ParseMultiToken(char *s,double *x)
 	*x = a;
 	return(k);
 }
-double **AllocMatrix(short nrow,short ncol)
+void ZeroVector(double *x,long n)
+{
+	long i;
+
+	for (i = 0; i < n; i++)
+		x[i] = 0.0;
+}
+double **AllocMatrix(long nrow,long ncol)
 {
 	double *vec;
 	double **mat;
-	short i;
+	long i;
 
 	vec = (double *) malloc(nrow * ncol * sizeof(double));
 	mat = (double **) malloc(nrow * sizeof(double *));
@@ -110,17 +119,17 @@ double **AllocMatrix(short nrow,short ncol)
 
 	return (mat);
 }
-void ZeroMatrix(double **x, short nr, short nc)
+void ZeroMatrix(double **x, long nr, long nc)
 {
-	short i, j;
+	long i, j;
 
 	for (i = 0; i < nr; i++)
 		for (j = 0; j < nc; j++)
 			x[i][j] = 0.0;
 }
-void MultMatrix(short m, short p, short n, double **a, double **b, double **c)
+void MultMatrix(long m, long p, long n, double **a, double **b, double **c)
 {
-	short i, j, k;
+	long i, j, k;
 	double x;
 
 	for (i = 0; i < m; i++)
@@ -192,4 +201,54 @@ double StdDevP(long n, double xm, double *x)
 	v = t / (double) (n);
 	z = sqrt(v);
 	return z;
+}
+double ***AllocMat3(long nrow,long ncol,long nlevel)
+{
+	double *vec;
+	double **m2;
+	double ***mat;
+	long i,j;
+
+	vec = (double *) malloc(nrow * ncol * nlevel * sizeof(double));
+	m2  = (double **) malloc(nrow * ncol * sizeof(double *));
+	mat = (double ***) malloc(nrow * sizeof(double **));
+
+	for (i = 0; i < nrow; i++)
+		for (j = 0; j < ncol; j++)
+			m2[j + i * ncol] = &vec[j * nlevel + i * ncol * nlevel];
+
+	for (i = 0; i < nrow; i++)
+		mat[i] = &m2[i*ncol];
+
+	return (mat);
+}
+void ZeroMat3(double ***x,long nrow,long ncol,long nlevel)
+{
+	long i, j, k;
+
+	for (k = 0; k < nlevel; k++)
+	{
+		for (j = 0; j < ncol; j++)
+		{
+			for (i = 0; i < nrow; i++)
+			{
+				x[i][j][k] = 0.0;
+			}
+		}
+	}
+}
+int compdouble(const void *a,const void *b)
+{
+	double x1, x2;
+
+	x1 = * (double *)a;
+	x2 = * (double *)b;
+
+	if (x1 < x2)
+		return -1;
+	else if (x2 < x1)
+		return 1;
+	else
+		return 0;
+
 }
