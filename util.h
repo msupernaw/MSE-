@@ -4,7 +4,7 @@
  * and open the template in the editor.
  */
 
-/* 
+/*
  * File:   util.h
  * Author: matthewsupernaw
  *
@@ -17,6 +17,7 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
+
     /* Function Prototypes */
 
     char *UpperCase(char *);
@@ -26,11 +27,15 @@ extern "C" {
     void DateString(char *);
     void TimeString(char *);
 
-    short ParseMultiToken(char *, double *);
+    short ParseMultiToken(char *,double *);
 
-    void ZeroMatrix(double **, short, short);
+    void ZeroVector(double *,long);
 
-    void MultMatrix(short, short, short, double **, double **, double **);
+    void ZeroMatrix(double **, long, long);
+
+    void ZeroMat3(double ***,long,long,long);
+
+    void MultMatrix(long, long, long, double **, double **, double **);
 
     void BubbleUpSort(long, double *);
 
@@ -41,14 +46,17 @@ extern "C" {
     double StdDevP(long, double, double *);
 
 
-    double **AllocMatrix(short, short);
+    double **AllocMatrix(long, long);
+
+    double ***AllocMat3(long,long,long);
+
+    int compdouble(const void *,const void *);
 
 
     /* Date Time Strings */
 
     char dstring[12];
     char tstring[6];
-
 
 
 #ifdef __cplusplus
