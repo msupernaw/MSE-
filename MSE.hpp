@@ -102,6 +102,7 @@ namespace noaa {
 
         short assessment_frequency;     // MRS addition to v3.4.3
         double Blim;                    // ZTA addition
+        bool assess_this_year;
 
         FILE *fp1,*fp2, *fp3, *fp4, *fp5, *fp6;
 
@@ -763,14 +764,13 @@ namespace noaa {
                 }
 
 
+                // run assessment
+                assess_this_year = true;
+
                 while (NYears <= MaxYears)
                 {
-                    if (this->assessment_frequency > 1 && (NYears % this->assessment_frequency) != 0)
-                    {
-                        NYears++;
-
-                        continue;
-                    }
+                    assess_this_year = ((this->assessment_frequency == 1) ||
+                                        ((NYears % this->assessment_frequency) == 0));
 
                     if (ModelFlag == 0)
                     {
@@ -859,16 +859,19 @@ namespace noaa {
 
                         DrawCatchSamples();
                         DrawSurveySamples();
-                        WriteVPAInputFile(fname);
-                        RemoveOutputFiles(fname);
 
-                        kx = LaunchVPA(fname);
-                        if (kx == 0)
+                        if (assess_this_year)
                         {
-                            fprintf(stderr,"Error Launching VPA !\n");
-                            exit(1);
-                        }
+                            RemoveOutputFiles(fname);
+                            WriteVPAInputFile(fname);
 
+                            kx = LaunchVPA(fname);
+                            if (kx == 0)
+                            {
+                                fprintf(stderr,"Error Launching VPA !\n");
+                                exit(1);
+                            }
+                        }
                         ScanVPAResults(fname);
 
                         SSBEst = 0.0;
@@ -878,12 +881,15 @@ namespace noaa {
                         FTarg  = MSRule(SSBEst);
 
 
-                        WriteAgeProInputFile(fname);
-                        kx = LaunchAgePro(fname);
-                        if (kx == 0)
+                        if (assess_this_year)
                         {
-                            fprintf(stderr,"Error Launching AgePro !\n");
-                            exit(1);
+                            WriteAgeProInputFile(fname);
+                            kx = LaunchAgePro(fname);
+                            if (kx == 0)
+                            {
+                                fprintf(stderr,"Error Launching AgePro !\n");
+                                exit(1);
+                            }
                         }
                         ScanAgeProResults(fname);
 
@@ -978,14 +984,18 @@ namespace noaa {
 
                         DrawCatchSamples();
                         DrawSurveySamples();
-                        RemoveOutputFiles(fname);
-                        WriteAsapInputFile(fname);
 
-                        kx = LaunchAsap(fname);
-                        if (kx == 0)
+                        if (assess_this_year)
                         {
-                            fprintf(stderr,"Error Launching ASAP !\n");
-                            exit(1);
+                            RemoveOutputFiles(fname);
+                            WriteAsapInputFile(fname);
+
+                            kx = LaunchAsap(fname);
+                            if (kx == 0)
+                            {
+                                fprintf(stderr,"Error Launching ASAP !\n");
+                                exit(1);
+                            }
                         }
                         ScanAsapResults(fname);
 
@@ -994,12 +1004,15 @@ namespace noaa {
                         FTarg  = MSRule(SSBEst);
 
 
-                        WriteAgeProInputFile(fname);
-                        kx = LaunchAgePro(fname);
-                        if (kx == 0)
+                        if (assess_this_year)
                         {
-                            fprintf(stderr,"Error Launching AgePro !\n");
-                            exit(1);
+                            WriteAgeProInputFile(fname);
+                            kx = LaunchAgePro(fname);
+                            if (kx == 0)
+                            {
+                                fprintf(stderr,"Error Launching AgePro !\n");
+                                exit(1);
+                            }
                         }
                         ScanAgeProResults(fname);
 
@@ -1094,32 +1107,37 @@ namespace noaa {
 
                         DrawCatchSamples();
                         DrawSurveySamples();
-                        RemoveOutputFiles(fname);
-                        WriteAspicInputFile(fname);
 
-                        kx = LaunchAspic(fname);
-                        if (kx == 0)
+                        if (assess_this_year)
                         {
-                            fprintf(stderr,"Error Launching Aspic\n");
-                            exit(1);
-                        }
+                            RemoveOutputFiles(fname);
+                            WriteAspicInputFile(fname);
 
+                            kx = LaunchAspic(fname);
+                            if (kx == 0)
+                            {
+                                fprintf(stderr,"Error Launching Aspic\n");
+                                exit(1);
+                            }
+                        }
                         CaptureAspicResults(fname);
 
                         SSBEst = AspicB[NYears-1] / 1000.0;
 
                         FTarg  = MSRule(SSBEst);
 
-                        WriteAspicPFile(fname);
-
-                        kx = LaunchAspicProj(fname);
-
-                        if (kx == 0)
+                        if (assess_this_year)
                         {
-                            fprintf(stderr,"Error Launching Aspic Projection\n");
-                            exit(1);
-                        }
+                            WriteAspicPFile(fname);
 
+                            kx = LaunchAspicProj(fname);
+
+                            if (kx == 0)
+                            {
+                                fprintf(stderr,"Error Launching Aspic Projection\n");
+                                exit(1);
+                            }
+                        }
                         ScanAspicProj(fname);
 
                         flag = 0;
