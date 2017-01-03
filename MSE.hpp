@@ -503,7 +503,6 @@ namespace noaa {
 
         MSE(int argc, char **argv) {
             this->assessment_frequency = 1;
-            this->Blim = 0.05;
 
             long iopt = 5;
 
@@ -651,6 +650,7 @@ namespace noaa {
             ExpandData();
 
 
+            this->assessment_frequency = this->assessment_frequency < 1 ? 1 : this->assessment_frequency;
             std::cout << "assessment frequency = " << this->assessment_frequency << "\n";
             std::cout << "done.\n";
 
@@ -765,8 +765,10 @@ namespace noaa {
 
                 while (NYears <= MaxYears)
                 {
-                    if (this->assessment_frequency > 1 && (!(NYears % this->assessment_frequency) == 0))
+                    if (this->assessment_frequency > 1 && (NYears % this->assessment_frequency) != 0)
                     {
+                        NYears++;
+
                         continue;
                     }
 
@@ -846,8 +848,6 @@ namespace noaa {
 
 
                         FPrev = FEst;
-
-                        NYears++;
 
                         printf("Last Year in Projection = %ld\n\n",NFYear+NYears-1);
                     }
@@ -969,7 +969,6 @@ namespace noaa {
 
                         PrevProj = ProjLand;
 
-                        NYears++;
                     }
                     else if (ModelFlag == 2)
                     {
@@ -1086,7 +1085,6 @@ namespace noaa {
 
                         PrevProj = ProjLand;
 
-                        NYears++;
                     }
                     else if (ModelFlag == 3)
                     {
@@ -1206,9 +1204,10 @@ namespace noaa {
 
                         PrevProj = ProjLand;
 
-                        NYears++;
-
                     }
+
+                    NYears++;
+
                 }
 
 
