@@ -102,7 +102,6 @@ namespace noaa {
 
         short assessment_frequency;     // MRS addition to v3.4.3
         double Blim;                    // ZTA addition
-        bool assess_this_year;
 
         FILE *fp1,*fp2, *fp3, *fp4, *fp5, *fp6;
 
@@ -765,56 +764,79 @@ namespace noaa {
 
 
                 // run assessment
-                assess_this_year = true;
+                bool assess_this_year = true;
+                int proj_year = 0;
 
                 while (NYears <= MaxYears)
                 {
                     assess_this_year = ((this->assessment_frequency == 1) ||
-                                        ((NYears % this->assessment_frequency) == 0));
+                                        ((proj_year % this->assessment_frequency) == 0));
 
                     if (ModelFlag == 0)
                     {
 
                         TargetLand = Landings[NYears-1] + Discards[NYears-1];
 
-                        ssbx = SSB[NYears-2];
-
-                        sd = sqrt(log(cvSSB * cvSSB + 1.0));
-                        zscore = gsl_box_muller();
-                        xx = exp(sd * zscore);
-                        SSBEst = ssbx * (1.0 + biasSSB) * xx;
-
-                        FTarg  = MSRule(SSBEst);
-
-                        zscore = gsl_box_muller();
-                        xx = exp(sd * zscore);
-                        FEst = FTarg * (1.0 + biasFEst) * xx;
-
                         flag = 0;
 
-                        if (DeltaFlag && NYears > KYears)
+                        if (assess_this_year)
                         {
-                            xx = (FEst - FPrev) / FPrev;
-                            if (xx > DeltaLand)
+                            ssbx = SSB[NYears-2];
+
+                            sd = sqrt(log(cvSSB * cvSSB + 1.0));
+                            zscore = gsl_box_muller();
+                            xx = exp(sd * zscore);
+                            SSBEst = ssbx * (1.0 + biasSSB) * xx;
+
+                            FTarg  = MSRule(SSBEst);
+
+                            zscore = gsl_box_muller();
+                            xx = exp(sd * zscore);
+                            FEst = FTarg * (1.0 + biasFEst) * xx;
+
+                            if (DeltaFlag && NYears > KYears)
                             {
-                                FEst = FPrev * (1.0 + DeltaLand);
-                                flag = 1;
+                                xx = (FEst - FPrev) / FPrev;
+                                if (xx > DeltaLand)
+                                {
+                                    FEst = FPrev * (1.0 + DeltaLand);
+                                    flag = 1;
+                                }
+                                else if (fabs(xx) > DeltaLand)
+                                {
+                                    FEst = FPrev * (1.0 - DeltaLand);
+                                    flag = 1;
+                                }
                             }
-                            else if (fabs(xx) > DeltaLand)
-                            {
-                                FEst = FPrev * (1.0 - DeltaLand);
-                                flag = 1;
-                            }
+
+                            FullF[NYears] = FEst;
+
+                            HarvestSpec[NYears] = 0;
                         }
+                        else
+                        {
+                            // use the previous year's catch as this year's catch
 
+                            SSBEst = ssbx = SSB[NYears-1];
 
-                        FullF[NYears] = FEst;
+                            FTarg  = MSRule(SSBEst);
 
-                        HarvestSpec[NYears] = 0;
+                            if (DiscFlag)
+                                HarvestSpec[NYears] = 2;
+                            else
+                                HarvestSpec[NYears] = 1;
+
+                            HarvestValue[NYears] = TargetLand;
+                        }
 
                         CalcStockBiomass(NYears);
 
                         CalcCatch(NYears);
+
+                        if (!assess_this_year)
+                        {
+                            FEst = FullF[NYears];
+                        }
 
                         ApplyRecruitment(NYears);
 
@@ -1225,6 +1247,7 @@ namespace noaa {
                     }
 
                     NYears++;
+                    proj_year++;
 
                 }
 
