@@ -817,9 +817,9 @@ namespace noaa {
                         {
                             // use the previous year's catch as this year's catch
 
-                            SSBEst = ssbx = SSB[NYears-1];
+                            ssbx = SSB[NYears-2];
 
-                            FTarg  = MSRule(SSBEst);
+                            FTarg  = MSRule(SSB[NYears-1]);
 
                             if (DiscFlag)
                                 HarvestSpec[NYears] = 2;
@@ -835,7 +835,9 @@ namespace noaa {
 
                         if (!assess_this_year)
                         {
-                            FEst = FullF[NYears];
+                            // requested by MJS
+                            SSBEst = -1;
+                            FEst = -1;
                         }
 
                         ApplyRecruitment(NYears);
